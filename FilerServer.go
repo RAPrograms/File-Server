@@ -6,7 +6,12 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"path"
+	"path/filepath"
 )
+
+var basePath string
 
 //go:embed templates
 var templateFiles embed.FS
@@ -14,6 +19,13 @@ var templateFiles embed.FS
 var templates *template.Template
 
 func main() {
+	var err error
+
+	basePath, err = filepath.Abs("./")
+	if err != nil {
+		log.Panicf("Unable to get base path because of %v", err)
+	}
+
 	http.HandleFunc("/", handler)
 
 	files, err := template.New("").ParseFS(templateFiles, "templates/*.html")
@@ -27,25 +39,25 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-type Widget struct {
-	Name  string
-	Price int
-}
-
-type ViewData struct {
-	Name    string
-	Widgets []Widget
-}
-
 func handler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("%v", r.URL)
+	path := path.Join(basePath, r.URL.String())
+	file, err := os.Stat(path)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
-	vd := ViewData{
-		Name: "John Smith",
-		Widgets: []Widget{
-			{"Blue Widget", 12},
-			{"Red Widget", 12},
-			{"Green Widget", 12},
-		}}
-	templates.ExecuteTemplate(w, "index.html", vd)
+	if !file.IsDir() {
+		handle_file_responce(path, w, r)
+	}
+
+	handle_directory_responce(path, w, r)
+}
+
+func handle_directory_responce(path string, w http.ResponseWriter, r *http.Request) {
+	templates.ExecuteTemplate(w, "index.html", nil)
+}
+
+func handle_file_responce(path string, w http.ResponseWriter, r *http.Request) {
+	log.Printf("Responding with %s content", path)
 }
