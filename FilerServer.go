@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 var basePath string
@@ -59,10 +60,11 @@ func handle_directory_responce(path string, w http.ResponseWriter, r *http.Reque
 	templates.ExecuteTemplate(w, "index.html", nil)
 }
 
-func handle_file_responce(path string, w http.ResponseWriter, r *http.Request) {
+func handle_file_responce(path string, w http.ResponseWriter, _ *http.Request) {
 	file, _ := os.ReadFile(path)
 
-	w.Header().Set("Content-Disposition", "inline; filename=NameOfFile")
+	file_name := path[strings.LastIndex(path, "/")+1:]
+	w.Header().Set("Content-Disposition", "inline; filename="+file_name)
 
 	file_type := http.DetectContentType(file)
 	w.Header().Set("Content-Type", file_type)
