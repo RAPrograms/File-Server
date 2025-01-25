@@ -12,6 +12,11 @@ import (
 	"strings"
 )
 
+type File struct {
+	Name string
+	Size int64
+}
+
 var basePath string
 
 //go:embed templates
@@ -57,6 +62,27 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func handle_directory_responce(path string, w http.ResponseWriter, r *http.Request) {
+	directory, err := os.ReadDir(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var files = make([]File, len(directory))
+
+	for i, file := range directory {
+		file_path := filepath.Join(path, file.Name())
+		data, err := os.Stat(file_path)
+		if err != nil {
+			files[i] = File{Name: file.Name()}
+			continue
+		}
+
+		files[i] = File{
+			Name: data.Name(),
+			Size: data.Size(),
+		}
+	}
+
 	templates.ExecuteTemplate(w, "index.html", nil)
 }
 
