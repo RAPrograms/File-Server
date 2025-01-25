@@ -49,6 +49,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	if !file.IsDir() {
 		handle_file_responce(path, w, r)
+		return
 	}
 
 	handle_directory_responce(path, w, r)
@@ -59,5 +60,12 @@ func handle_directory_responce(path string, w http.ResponseWriter, r *http.Reque
 }
 
 func handle_file_responce(path string, w http.ResponseWriter, r *http.Request) {
-	log.Printf("Responding with %s content", path)
+	file, _ := os.ReadFile(path)
+
+	w.Header().Set("Content-Disposition", "inline; filename=NameOfFile")
+
+	file_type := http.DetectContentType(file)
+	w.Header().Set("Content-Type", file_type)
+
+	w.Write(file)
 }
