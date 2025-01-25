@@ -13,8 +13,14 @@ import (
 )
 
 type File struct {
-	Name string
-	Size int64
+	Name  string
+	Size  int64
+	IsDir bool
+}
+
+type Directory struct {
+	Path  []string
+	Files []File
 }
 
 var basePath string
@@ -78,12 +84,18 @@ func handle_directory_responce(path string, w http.ResponseWriter, r *http.Reque
 		}
 
 		files[i] = File{
-			Name: data.Name(),
-			Size: data.Size(),
+			Name:  data.Name(),
+			Size:  data.Size(),
+			IsDir: data.IsDir(),
 		}
 	}
 
-	templates.ExecuteTemplate(w, "index.html", nil)
+	data := Directory{
+		Path:  strings.Split(path, "/"),
+		Files: files,
+	}
+
+	templates.ExecuteTemplate(w, "index.html", data)
 }
 
 func handle_file_responce(path string, w http.ResponseWriter, _ *http.Request) {
